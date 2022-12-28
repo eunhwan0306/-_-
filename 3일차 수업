@@ -1,0 +1,228 @@
+도미와 빙어의 무게 길이 출력
+
+import csv
+
+f = open('Fish.csv', 'r')
+data = csv.reader(f)
+
+h = next(data)
+
+bream_weight = []
+bream_lenght = []
+
+smelt_weight = []
+smelt_lenght = []
+
+for row in data:
+    if row[0] == 'Bream':
+        bream_weight.append(float(row[1]))
+        bream_lenght.append(float(row[3]))
+    
+    if row[0] == 'Smelt':
+        smelt_weight.append(float(row[1]))
+        smelt_lenght.append(float(row[3]))
+                            
+weight = bream_weight + smelt_weight
+lenght = bream_lenght + smelt_lenght
+                            
+print('무게: ', weight)
+print('길이: ', lenght)
+                            
+f.close()
+
+import numpy as np
+
+#fish_data = [ [I, w] for I, w in zip(lenght, weight) ]
+#print(fish_data)
+
+fish_data = np.column_stack( (lenght, weight) )
+
+print(fish_data[0:3, 1])
+
+#정답 데이터(y) 준비 !
+#fish_target = [1] * 35 + [0] * 14
+#print(fish_target)
+
+fish_target = np.concatenate( (np.ones(35), np.zeros(14) ) )
+print(fish_target)
+print( type(fish_target))
+
+#학습용 데이터 & 시험용 데이터 "train_test_split 함수"를 이용해 분할하기
+
+from sklearn.model_selection import train_test_split
+
+train_input, test_input, train_target, test_target = train_test_split( fish_data, fish_target, stratify=fish_target, random_state=42 )
+
+print('학습용 데이터:', train_input.shape, train_target.shape)
+print('시험용 데이터:', train_input.shape, test_target.shape)
+
+
+# 도미: 35, 빙어: 14 <---- class imbalance (클래스 불균형 문제)
+
+from sklearn.neighbors import KNeighborsClassifier
+
+model = KNeighborsClassifier()
+
+model.fit( train_input, train_target )
+result = model.score(test_input, test_target )
+
+print('정확도: ', round(result * 100, 2), '%')
+
+#정규화 (Normalization) <----- scale을 맞춰주는 작업
+
+import matplotlib.pyplot as plt
+
+plt.rc('font', family='Malgun Gothic')
+plt.scatter( train_input[:, 0], train_input[:, 1] )
+plt.scatter(bream_lenght, bream_weight, label = '도미')
+plt.scatter(smelt_lenght, smelt_weight, label = '빙어')
+
+plt.scatter(25, 150, marker='*', s = 200, color = 'b')
+plt.xlabel('lenght [cm]')
+plt.ylabel('weight [g]')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+
+
+reselt = model.predict( [[25,150]] )
+
+if result ==0:
+    print('도미입니다')
+elif result ==1:
+    print('빙어입니다')
+    
+
+
+
+
+distance, index = model.kneighbors([[25, 150]])
+
+print('거리: ', distance)
+print('색인: ', index)
+
+
+
+
+
+
+plt.scatter(bream_lenght, bream_weight, label = '도미')
+plt.scatter(smelt_lenght, smelt_weight, label = '빙어', color = 'g')
+
+plt.scatter(train_input[index, 0], train_input[index, 1], marker='^', color = 'r')
+
+plt.scatter(25, 150, marker='*', s = 200, color = 'k')
+plt.xlabel('lenght [cm]')
+plt.ylabel('weight [g]')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+
+
+
+
+print(train_input[:8])
+
+
+
+
+
+
+
+
+# 정규화 <-- 1) Min-Max 정규화, 2) z-score 정규화 = 표준 정규화 Standard Normal
+
+m = np.mean( train_input, axis = 0 ) #평균 m
+s = np.std( train_input, axis = 0 ) #표준편차 s
+
+print('평균: ', m)
+print('표준편차: ', s)
+
+
+
+
+
+
+
+
+
+train_scaled = (train_input - m) / s
+
+print(train_input[0:5]) # 정규화 전 (before)
+print(train_scaled[0:5]) # 정규화 후 (after)
+
+
+
+
+
+
+
+
+
+plt.scatter( train_scaled[:, 0], train_scaled[:, 1] )
+plt.scatter(25, 150, marker = '*', s = 200, color = 'black')
+plt.xlabel('lenght')
+plt.ylabel('weight')
+plt.grid(True)
+plt.show()
+
+
+
+
+
+
+
+
+# 시험용 데이터를 정규화하기
+cup = ( [25, 150] - m ) / s #정규화 과정 (z-score)
+
+plt.rcParams['axes.unicode_minus'] =False
+plt.scatter( train_scaled[:, 0], train_scaled[:, 1] )
+plt.scatter(cup[0], cup[1] , marker = '*', s = 200, color = 'black')
+plt.xlabel('lenght')
+plt.ylabel('weight')
+plt.grid(True)
+plt.show()
+
+
+
+
+
+
+
+test_scaled = (test_input - m) / s
+
+print(test_input[0:5])
+print(test_scaled[0:5])
+
+
+
+
+
+
+
+model = KNeighborsClassifier()
+
+model.fit(train_scaled, train_target) # 정규화된 데이터를 이용해서 학습
+
+result = model.score(test_scaled, test_target) # 모델 평가 (정확도 측정)
+
+print('정확도: ', round(result * 100, 2), '%')
+
+
+
+
+model.predict( [cup])
+
+result = model.predict( [[25,150]] )
+
+if result ==0:
+    print('도미입니다')
+elif result ==1:
+    print('빙어입니다')
