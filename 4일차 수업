@@ -267,3 +267,13 @@ print('(시험용) 정확도: ', round(result2 * 100, 2), '%')
 plt.figure(figsize = (15, 5))
 plot_tree(model, feature_names = ['alcohol', 'sugar', 'pH'], filled =True)
 plt.show()
+
+
+
+
+
+
+
+
+print(model.feature_importances_)
+# 알코올, 당도, pH
