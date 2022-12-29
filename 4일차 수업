@@ -1,0 +1,269 @@
+# 레드 와인 (0) vs. 화이트 와인(1)
+# 이진 분류 (Binary Classification)
+
+import csv
+
+
+f = open('wine_csv.csv', 'r') 
+data = csv.reader(f)
+
+h = next(data) # <--- header 분리
+
+
+
+f.close
+
+
+
+
+
+
+
+
+import pandas as pd
+
+wine = pd.read_csv('wine_csv.csv')
+
+#print(type(wine))
+wine.tail()
+
+
+
+
+
+
+
+
+
+
+wine.info()
+
+
+
+
+
+
+
+
+
+wine.describe()
+
+
+
+
+
+
+
+
+
+
+
+
+input_data = wine[['alcohol', 'sugar', 'pH' ]]
+input_data
+
+
+
+
+
+
+
+
+input_target = wine[ ['class'] ]
+input_target.head(5)
+
+
+
+
+
+
+
+
+print(type(wine))
+print(type(input_data))
+
+
+
+
+
+
+
+
+
+data = input_data.to_numpy() # Dataframe ----> ndarray
+
+print(type(data))
+print(data.shape)
+data
+
+
+
+
+
+
+
+
+
+
+
+target = input_target.to_numpy()
+
+print(type(target))
+print(target.shape)
+target
+
+
+
+
+
+
+
+
+# data. target <--- 학습용 데이터와 시험용 데이터로 분할하기
+from sklearn.model_selection import train_test_split
+
+train_data, test_data, train_target, test_target = train_test_split(data, target, random_state = 42, test_size = 0.2)
+
+print('학습용 데이터: ', train_data.shape) # 80%
+print('시험용 데이터: ', test_data.shape) # 20%
+
+
+
+
+
+
+
+
+# z-score <-- mean (평균값), std (표준편차)
+#new_data = (data - mean) / std
+
+#np.mean()
+#np.std()
+from sklearn.preprocessing import StandardScaler
+
+ss = StandardScaler()
+
+ss.fit(train_data)    #평균, 표준편차 계산해서 z-score 변환할 준비하기
+
+train_scaled = ss.transform(train_data) #  입력된 데이터를 z-score로 변환
+test_scaled = ss.transform(test_data)   # 입력된 데이터로 z-score로 변환
+
+
+
+
+
+
+
+
+
+
+from sklearn.tree import DecisionTreeClassifier
+
+model = DecisionTreeClassifier()
+
+model.fit(train_scaled, train_target) # 학습용 데이터 전달 --> 학습시킴
+
+result1 = model.score(train_scaled, train_target) # 시험용 데이터 전달 ---> 모델
+result2 = model.score(test_scaled, test_target) # 시험용 데이터 전달 ---> 모델
+
+print('(학습용) 정확도: ', round(result1 * 100, 2), '%')
+print('(시험용) 정확도: ', round(result2 * 100, 2), '%')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
+
+plt.figure(figsize = (10,7))     # 그림을 그리기 위한 도화지 준비
+plot_tree(model)    #도화지 위에 나무를 그림으로 그려라
+plt.show()    #그림을 다 그렸으면, 나한테 보여라
+
+
+
+
+
+
+
+
+
+
+
+
+plt.figure(figsize=(10, 7))   #가로 10인치, 새로 7인치
+plot_tree(model, max_depth = 1, feature_names = ['alchol', 'sugar', 'pH'], filled = True)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+# 가지치기
+# 사진 가지치기 vs. 사후 가지치기
+# 사진 가지치기
+
+model = DecisionTreeClassifier(max_depth = 3, random_state = 42)
+
+model.fit(train_scaled, train_target) # 정규화 후 결과
+
+result1 = model.score(train_scaled, train_target) 
+result2 = model.score(test_scaled, test_target)
+
+print('(학습용) 정확도: ', round(result1 * 100, 2), '%')
+print('(시험용) 정확도: ', round(result2 * 100, 2), '%')
+
+
+
+
+
+
+plt.figure(figsize = (15, 5))
+plot_tree(model, feature_names = ['alcohol', 'sugar', 'pH'], filled =True)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+model = DecisionTreeClassifier(max_depth = 3, random_state = 42)
+
+model.fit(train_data, train_target) # 정규화되지 않은 데이터로 학습 
+
+result1 = model.score(train_data, train_target) 
+result2 = model.score(test_data, test_target)
+
+print('(학습용) 정확도: ', round(result1 * 100, 2), '%')
+print('(시험용) 정확도: ', round(result2 * 100, 2), '%')
+
+
+
+
+
+
+
+
+
+plt.figure(figsize = (15, 5))
+plot_tree(model, feature_names = ['alcohol', 'sugar', 'pH'], filled =True)
+plt.show()
